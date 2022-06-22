@@ -1,0 +1,8 @@
+- pipeline.id: els_stdin-pipeline
+  path.config: "/usr/share/logstash/config/pipelines/els_stdin.conf"
+- pipeline.id: els_tcp-pipeline
+  path.config: "/usr/share/logstash/config/pipelines/els_tcp.conf"
+- pipeline.id: els_sql-pipeline
+  path.config: "/usr/share/logstash/config/pipelines/els_sql.conf"
+- pipeline.id: els_sql_timestamp-pipeline
+  path.config: "/usr/share/logstash/config/pipelines/els_sql_timestamp.conf"  

@@ -1,0 +1,103 @@
+version: "3.9"
+
+services:
+  elastic:
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    container_name: elasticsearch
+    #image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: elasticsearch:${STACK_VERSION}
+    hostname: elasticsearch
+    ports:
+      - ${ES_PORT}:9200
+    volumes:
+      - ./elastic-data:/usr/share/elasticsearch/data
+    environment:
+      - bootstrap.memory_lock=true  
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - discovery.seed_hosts=["localhost", "127.0.0.1"]
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.license.self_generated.type=${LICENSE}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastcinetwork
+
+  kibana:
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    container_name: kibana
+    #image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    image: kibana:${STACK_VERSION}
+    hostname: kibana
+    ports:
+      - ${KIBANA_PORT}:5601
+    depends_on:
+      - elastic
+    volumes:
+      - ./kibana-data:/usr/share/kibana/data
+    environment:      
+      - xpack.security.enabled=false
+      - http.host=0.0.0.0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200    
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - elastcinetwork
+
+  logstash:
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    image: logstash:${STACK_VERSION}
+    container_name: logstash
+    hostname: logstash
+    environment:      
+       - xpack.security.enabled=false
+       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      #- ./logstash-data/pipeline:/usr/share/logstash/pipeline   # для одиночных файлов .conf 
+      - ./logstash-data/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml   
+      - ./logstash-data/config/pipelines:/usr/share/logstash/config/pipelines   
+      - ./logstash-data/config/lib/jars/mssql-jdbc-10.2.1.jre11.jar:/usr/share/logstash/logstash-core/lib/jars/mssql-jdbc-10.2.1.jre11.jar
+    depends_on:
+      - elastic  
+    networks:
+      - elastcinetwork
+    ports:
+      - ${LOGSTASH_PORT}:5044
+      - 9600:9600
+      - 5000:5000
+
+  mssql:     
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    image: mcr.microsoft.com/mssql/server
+    container_name: mssql
+    hostname: mssql
+    environment:
+            - ACCEPT_EULA=Y
+            - SA_PASSWORD=SA_PASSWORD
+            - MSSQL_PID=Developer
+    volumes:
+      - ./sql-data/data:/var/opt/mssql/data
+      - ./sql-data/log:/var/opt/mssql/log
+      - ./sql-data/secrets:/var/opt/mssql/secrets
+    ports:  
+      - "${DB_PORT}:1433" 
+    networks:
+      - elastcinetwork
+
+networks:
+  elastcinetwork:
+    driver: bridge
