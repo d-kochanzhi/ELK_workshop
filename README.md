@@ -5,6 +5,6 @@ ELK (Elastic-Logstash-Kibana) workshop
 
 ![Demo](Resources/slide2.JPG)
 
-![Demo](Resources/slide3.JPGg)
+![Demo](Resources/slide3.JPG)
 
 ![Demo](Resources/slide4.JPG)
